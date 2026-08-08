@@ -72,14 +72,7 @@ final class PriceService {
     }
 
     /// The Twelve Data API key persisted in UserDefaults.
-    private var apiKey: String {
-        didSet {
-            cachedRequest = PriceService.buildRequest(for: apiKey)
-            if apiKey.isEmpty {
-                refreshTask?.cancel()
-            }
-        }
-    }
+    private var apiKey: String = ""
 
     /// Cached URLRequest, rebuilt automatically when the API key changes.
     private var cachedRequest: URLRequest?
@@ -97,6 +90,14 @@ final class PriceService {
         return req
     }
 
+    /// Sets the API key and rebuilds the cached request.
+    /// Property observers do not fire during `init`, so this method ensures the
+    /// cached request is always kept in sync.
+    private func setAPIKey(_ key: String) {
+        apiKey = key
+        cachedRequest = PriceService.buildRequest(for: key)
+    }
+
     // MARK: - Initialization
 
     /// Private initializer enforces the singleton pattern.
@@ -105,8 +106,7 @@ final class PriceService {
     /// a repeating timer that refreshes the price on every interval.
     private init() {
         let key = UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
-        apiKey = key
-        cachedRequest = PriceService.buildRequest(for: key)
+        setAPIKey(key)
         Logger.price.info("Service initialized")
         Task { await fetchPrice() }
         startPollingIfNeeded()
@@ -118,7 +118,7 @@ final class PriceService {
     ///
     /// Cancels any previously active timer. If no API key is set the method
     /// is a no-op.
-    func startPollingIfNeeded() {
+    private func startPollingIfNeeded() {
         refreshTask?.cancel()
         guard !apiKey.isEmpty else { return }
         Logger.price.info("Starting polling with \(Constants.refreshInterval)s interval")
@@ -208,7 +208,7 @@ final class PriceService {
     // MARK: - Key Management
 
     func updateAPIKey(_ newKey: String) {
-        apiKey = newKey
+        setAPIKey(newKey)
         UserDefaults.standard.set(newKey, forKey: Constants.apiKeyStorageKey)
         startPollingIfNeeded()
     }}
