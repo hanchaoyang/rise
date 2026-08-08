@@ -44,7 +44,7 @@ struct RiseApp: App {
         case .rateLimited: return "Gold  Rate Limited"
         case .value(let v):
             let formatted = v.formatted(
-                .number.precision(.fractionLength(2))
+                .number.precision(.fractionLength(2)).grouping(.never)
             )
             return "Gold  $\(formatted)"
         case .error:       return "Gold  Fetch Failed"
