@@ -27,7 +27,7 @@ struct RiseApp: App {
 // MARK: - Menu Content
 
 /// Dropdown menu shown when the user clicks the menu bar item.
-fileprivate struct MenuContentView: View {
+private struct MenuContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {

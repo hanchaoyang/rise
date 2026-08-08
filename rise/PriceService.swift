@@ -54,6 +54,14 @@ final class PriceService {
 
     // MARK: - Private Properties
 
+    /// Custom URL session with explicit timeout configuration.
+    private let urlSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = Constants.requestTimeout
+        config.timeoutIntervalForResource = Constants.resourceTimeout
+        return URLSession(configuration: config)
+    }()
+
     /// Repeating timer that triggers periodic price refreshes.
     private var timer: Timer?
 
@@ -122,7 +130,7 @@ final class PriceService {
         defer { isLoading = false }
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
 
 #if DEBUG
             if let body = String(data: data, encoding: .utf8) {
@@ -157,13 +165,3 @@ final class PriceService {
     }
 }
 
-// MARK: - Logging
-
-extension Logger {
-
-    /// Logger instance scoped to the price service subsystem.
-    static let price = Logger(
-        subsystem: "io.github.hanchaoyang.rise",
-        category: "PriceService"
-    )
-}

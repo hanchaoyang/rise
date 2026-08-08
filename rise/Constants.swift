@@ -8,6 +8,6 @@ enum Constants {
     static let timerTolerance: TimeInterval = 10
     static let settingsWindowWidth: CGFloat = 440
     static let settingsWindowHeight: CGFloat = 220
-    static let settingsMinWidth: CGFloat = 440
-    static let settingsMinHeight: CGFloat = 220
+    static let requestTimeout: TimeInterval = 30
+    static let resourceTimeout: TimeInterval = 60
 }

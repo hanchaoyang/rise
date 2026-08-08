@@ -58,7 +58,7 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
-        .frame(minWidth: Constants.settingsMinWidth, minHeight: Constants.settingsMinHeight)
+        .frame(minWidth: Constants.settingsWindowWidth, minHeight: Constants.settingsWindowHeight)
         .onAppear {
             apiKey = storedKey
         }
