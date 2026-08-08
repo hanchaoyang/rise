@@ -65,10 +65,9 @@ final class PriceService {
         let price: String?
         let code: Int?
         let message: String?
-        let status: String?
     }
 
-    /// The Twelve Data API key stored in UserDefaults.
+    /// The Twelve Data API key persisted in UserDefaults.
     private var apiKey: String {
         UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
     }
@@ -92,14 +91,10 @@ final class PriceService {
     ///
     /// Kicks off an immediate fetch request and starts a repeating timer
     /// that refreshes the price every 300 seconds (5 minutes).
-    deinit {
-        refreshTask?.cancel()
-    }
-
     private init() {
         Logger.price.info("Service initialized — starting initial fetch and \(Constants.refreshInterval)s timer")
         Task { await fetchPrice() }
-        refreshTask = Task { [weak self] in
+        refreshTask = Task {
             while !Task.isCancelled {
                 do {
                     try await Task.sleep(for: .seconds(Constants.refreshInterval))
@@ -108,12 +103,12 @@ final class PriceService {
                 } catch {
                     Logger.price.error("Timer sleep failed: \(error.localizedDescription)")
                 }
-                guard let self, !self.apiKey.isEmpty else {
+                guard !apiKey.isEmpty else {
                     Logger.price.info("Timer fired — no API key, skipping")
                     continue
                 }
                 Logger.price.info("Timer fired — refreshing price")
-                await self.fetchPrice()
+                await fetchPrice()
             }
         }
     }

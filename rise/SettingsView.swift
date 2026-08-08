@@ -29,7 +29,7 @@ struct SettingsView: View {
 
             TextField("Enter API Key", text: $apiKey)
                 .textFieldStyle(.roundedBorder)
-                .frame(width: 320)
+                .frame(maxWidth: .infinity)
 
             HStack(spacing: 10) {
                 // Save button — persists key + triggers immediate fetch
