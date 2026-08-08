@@ -50,7 +50,7 @@ final class PriceService {
     // MARK: - Private Properties
 
     /// Custom URL session with explicit timeout configuration.
-    private static let urlSession: URLSession = {
+    private let urlSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = Constants.requestTimeout
         config.timeoutIntervalForResource = Constants.resourceTimeout
@@ -154,8 +154,7 @@ final class PriceService {
         defer { isLoading = false }
 
         do {
-            let (data, response) = try await Self.urlSession.data(for: request)
-            try Task.checkCancellation()
+            let (data, response) = try await urlSession.data(for: request)
 
 #if DEBUG
             if let body = String(data: data, encoding: .utf8) {
@@ -207,8 +206,11 @@ final class PriceService {
 
     // MARK: - Key Management
 
-    func updateAPIKey(_ newKey: String) {
+    func updateAPIKey(_ newKey: String, fetchImmediately: Bool = true) {
         setAPIKey(newKey)
         UserDefaults.standard.set(newKey, forKey: Constants.apiKeyStorageKey)
         startPollingIfNeeded()
+        if fetchImmediately {
+            Task { await fetchPrice() }
+        }
     }}

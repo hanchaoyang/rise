@@ -5,13 +5,14 @@ import SwiftUI
 /// Dropdown menu shown when the user clicks the menu bar item.
 struct MenuContentView: View {
     @Environment(\.openSettings) private var openSettings
+    private let priceService = PriceService.shared
 
     var body: some View {
         // Refresh — fetches the latest price immediately
         Button("Refresh") {
-            Task { await PriceService.shared.fetchPrice() }
+            Task { await priceService.fetchPrice() }
         }
-        .disabled(PriceService.shared.isLoading)
+        .disabled(priceService.isLoading)
 
         Divider()
 

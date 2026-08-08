@@ -6,6 +6,8 @@ import SwiftUI
 /// and provides a settings window for configuring the Twelve Data API key.
 @main
 struct RiseApp: App {
+    private let priceService = PriceService.shared
+
     var body: some Scene {
         // MARK: - Menu Bar
 
@@ -27,7 +29,7 @@ struct RiseApp: App {
 
     /// Human-readable menu bar label derived from the current price status.
     private var priceLabel: String {
-        switch PriceService.shared.status {
+        switch priceService.status {
         case .initial:     return "Gold $---"
         case .noKey:       return "Gold $No API Key"
         case .unauthorized:return "Gold $Invalid Key"
