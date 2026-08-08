@@ -114,6 +114,7 @@ final class PriceService {
     /// or missing API key. Safe to call from any context — a loading guard
     /// could be added if rate limiting becomes necessary.
     func fetchPrice() async {
+        guard !isLoading else { return }
         guard let request = request else {
             Logger.price.info("No API key configured — skipping fetch")
             status = .noKey
