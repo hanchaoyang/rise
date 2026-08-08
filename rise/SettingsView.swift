@@ -5,18 +5,16 @@ import OSLog
 
 /// Settings window that allows the user to enter and save their Twelve Data API key.
 ///
-/// The key is persisted via `@AppStorage` and used by `PriceService` for all
+/// The key is persisted via `UserDefaults` and used by `PriceService` for all
 /// price requests. After saving, an immediate fetch is triggered so the menu
 /// bar reflects the latest data without waiting for the timer.
 struct SettingsView: View {
 
     // MARK: - State
 
-    /// Persisted API key synced with UserDefaults via `@AppStorage`.
-    @AppStorage(Constants.apiKeyStorageKey) private var storedKey = ""
-
-    /// Local copy of the key for editing in the text field.
-    @State private var apiKey = ""
+    /// Local copy of the key for editing in the text field, initialized from
+    /// persistent storage.
+    @State private var apiKey = UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
 
     /// Tracks whether the key has been saved during this session.
     @State private var isSaved = false
@@ -36,7 +34,7 @@ struct SettingsView: View {
             HStack(spacing: 10) {
                 // Save button — persists key + triggers immediate fetch
                 Button("Save") {
-                    storedKey = apiKey
+                    UserDefaults.standard.set(apiKey, forKey: Constants.apiKeyStorageKey)
                     isSaved = true
                     Logger.price.info("API key saved — triggering fetch")
                     Task { await PriceService.shared.fetchPrice() }
@@ -58,9 +56,5 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
-        .frame(minWidth: Constants.settingsWindowWidth, minHeight: Constants.settingsWindowHeight)
-        .onAppear {
-            apiKey = storedKey
-        }
     }
 }

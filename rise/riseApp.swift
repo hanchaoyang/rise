@@ -12,7 +12,7 @@ struct RiseApp: App {
         MenuBarExtra {
             MenuContentView()
         } label: {
-            Text("Gold $\(PriceService.shared.displayPrice)")
+            Text(priceLabel)
         }
 
         // MARK: - Settings
@@ -22,12 +22,31 @@ struct RiseApp: App {
         }
         .defaultSize(width: Constants.settingsWindowWidth, height: Constants.settingsWindowHeight)
     }
+
+    // MARK: - Price Label
+
+    /// Human-readable menu bar label derived from the current price status.
+    private var priceLabel: String {
+        switch PriceService.shared.status {
+        case .initial:     return "Gold $---"
+        case .noKey:       return "Gold $No API Key"
+        case .unauthorized:return "Gold $Invalid Key"
+        case .rateLimited: return "Gold $Rate Limited"
+        case .value(let v):
+            let formatted = v.formatted(
+                .number.precision(.fractionLength(2))
+                .locale(Locale(identifier: "en_US_POSIX"))
+            )
+            return "Gold $\(formatted)"
+        case .error:       return "Gold $Fetch Failed"
+        }
+    }
 }
 
 // MARK: - Menu Content
 
 /// Dropdown menu shown when the user clicks the menu bar item.
-private struct MenuContentView: View {
+struct MenuContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {

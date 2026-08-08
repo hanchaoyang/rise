@@ -18,13 +18,19 @@ final class PriceService {
     // MARK: - Status
 
     /// Represents all possible states of the price-fetching lifecycle.
-    enum Status {
+    enum Status: Equatable, Sendable {
 
         /// App just launched, no fetch attempted yet.
         case initial
 
         /// No API key has been configured in Settings.
         case noKey
+
+        /// The configured API key was rejected by the server (HTTP 401).
+        case unauthorized
+
+        /// The API rate limit has been exceeded (HTTP 429).
+        case rateLimited
 
         /// A valid price was successfully retrieved.
         case value(Double)
@@ -41,17 +47,6 @@ final class PriceService {
     /// Whether an asynchronous fetch is currently in progress.
     var isLoading = false
 
-    /// Human-readable price string suitable for direct UI display.
-    var displayPrice: String {
-        switch status {
-        case .initial: return "---"
-        case .noKey:   return "No API Key"
-        case .value(let v):
-            return v.formatted(.number.precision(.fractionLength(2)))
-        case .error:   return "Fetch Failed"
-        }
-    }
-
     // MARK: - Private Properties
 
     /// Custom URL session with explicit timeout configuration.
@@ -62,11 +57,11 @@ final class PriceService {
         return URLSession(configuration: config)
     }()
 
-    /// Repeating timer that triggers periodic price refreshes.
-    private var timer: Timer?
+    /// Structured concurrency task that drives the periodic refresh loop.
+    private var refreshTask: Task<Void, Never>?
 
     /// Unified decodable model covering both success and error responses.
-    private struct APIResponse: Codable {
+    private struct APIResponse: Codable, Sendable {
         let price: String?
         let code: Int?
         let message: String?
@@ -100,15 +95,21 @@ final class PriceService {
     private init() {
         Logger.price.info("Service initialized — starting initial fetch and \(Constants.refreshInterval)s timer")
         Task { await fetchPrice() }
-        timer = Timer.scheduledTimer(withTimeInterval: Constants.refreshInterval, repeats: true) { [weak self] _ in
-            Logger.price.info("Timer fired — refreshing price")
-            Task { await self?.fetchPrice() }
+        refreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Constants.refreshInterval))
+                guard let self, !self.apiKey.isEmpty else {
+                    Logger.price.info("Timer fired — no API key, skipping")
+                    continue
+                }
+                Logger.price.info("Timer fired — refreshing price")
+                await self.fetchPrice()
+            }
         }
-        timer?.tolerance = Constants.timerTolerance
     }
 
     deinit {
-        timer?.invalidate()
+        refreshTask?.cancel()
     }
 
     // MARK: - Public API
@@ -118,6 +119,7 @@ final class PriceService {
     /// Updates `status` to the appropriate value upon success, failure,
     /// or missing API key. Safe to call from any context — a loading guard
     /// could be added if rate limiting becomes necessary.
+    @MainActor
     func fetchPrice() async {
         guard !isLoading else { return }
         guard let request = request else {
@@ -132,20 +134,32 @@ final class PriceService {
         do {
             let (data, response) = try await urlSession.data(for: request)
 
-#if DEBUG
-            if let body = String(data: data, encoding: .utf8) {
-                Logger.price.debug("API response body: \(body)")
-            }
-#endif
+            logResponseBody(data)
 
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode) else {
-                Logger.price.error("HTTP error: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                Logger.price.error("Invalid response type")
                 status = .error
                 return
             }
 
             Logger.price.debug("HTTP status: \(httpResponse.statusCode)")
+
+            switch httpResponse.statusCode {
+            case 200...299:
+                break
+            case 401:
+                Logger.price.error("HTTP 401 — API key invalid or expired")
+                status = .unauthorized
+                return
+            case 429:
+                Logger.price.error("HTTP 429 — rate limited")
+                status = .rateLimited
+                return
+            default:
+                Logger.price.error("HTTP error: \(httpResponse.statusCode)")
+                status = .error
+                return
+            }
 
             let apiResponse = try JSONDecoder().decode(APIResponse.self, from: data)
             if let priceStr = apiResponse.price, let value = Double(priceStr) {
@@ -163,5 +177,15 @@ final class PriceService {
             status = .error
         }
     }
-}
 
+    // MARK: - Private Helpers
+
+    /// Logs the raw API response body in debug builds only.
+    private func logResponseBody(_ data: Data) {
+        #if DEBUG
+        if let body = String(data: data, encoding: .utf8) {
+            Logger.price.debug("API response body: \(body)")
+        }
+        #endif
+    }
+}
