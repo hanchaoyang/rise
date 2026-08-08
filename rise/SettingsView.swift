@@ -13,7 +13,7 @@ struct SettingsView: View {
     // MARK: - State
 
     /// Persisted API key synced with UserDefaults via `@AppStorage`.
-    @AppStorage("apiKey") private var storedKey = ""
+    @AppStorage(Constants.apiKeyStorageKey) private var storedKey = ""
 
     /// Local copy of the key for editing in the text field.
     @State private var apiKey = ""
@@ -58,14 +58,9 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
-        .frame(minWidth: 420, minHeight: 160)
+        .frame(minWidth: Constants.settingsMinWidth, minHeight: Constants.settingsMinHeight)
         .onAppear {
-            // Sync local editing state with persisted value on view load
             apiKey = storedKey
-        }
-        .onChange(of: apiKey) { _, _ in
-            // Any manual edit resets the saved indicator
-            isSaved = false
         }
     }
 }

@@ -20,14 +20,14 @@ struct RiseApp: App {
         Settings {
             SettingsView()
         }
-        .defaultSize(width: 440, height: 220)
+        .defaultSize(width: Constants.settingsWindowWidth, height: Constants.settingsWindowHeight)
     }
 }
 
 // MARK: - Menu Content
 
 /// Dropdown menu shown when the user clicks the menu bar item.
-private struct MenuContentView: View {
+fileprivate struct MenuContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {

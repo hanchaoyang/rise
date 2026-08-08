@@ -57,29 +57,25 @@ final class PriceService {
     /// Repeating timer that triggers periodic price refreshes.
     private var timer: Timer?
 
-    /// Minimal decodable model matching the Twelve Data price endpoint response.
-    private struct PriceResponse: Codable {
-        let price: String
-    }
-
-    /// Captures API-level errors returned by Twelve Data (e.g. invalid key).
-    private struct APIErrorResponse: Codable {
-        let code: Int
-        let message: String
-        let status: String
+    /// Unified decodable model covering both success and error responses.
+    private struct APIResponse: Codable {
+        let price: String?
+        let code: Int?
+        let message: String?
+        let status: String?
     }
 
     /// The Twelve Data API key stored in UserDefaults.
     private var apiKey: String {
-        UserDefaults.standard.string(forKey: "apiKey") ?? ""
+        UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
     }
 
     /// Fully constructed request, or `nil` when no API key is set.
     private var request: URLRequest? {
         guard !apiKey.isEmpty else { return nil }
-        var components = URLComponents(string: "https://api.twelvedata.com/price")
+        var components = URLComponents(string: Constants.apiBaseURL)
         components?.queryItems = [
-            URLQueryItem(name: "symbol", value: "XAU/USD"),
+            URLQueryItem(name: "symbol", value: Constants.goldSymbol),
         ]
         guard let url = components?.url else { return nil }
         var req = URLRequest(url: url)
@@ -94,12 +90,13 @@ final class PriceService {
     /// Kicks off an immediate fetch request and starts a repeating timer
     /// that refreshes the price every 300 seconds (5 minutes).
     private init() {
-        Logger.price.info("Service initialized — starting initial fetch and 300s timer")
+        Logger.price.info("Service initialized — starting initial fetch and \(Constants.refreshInterval)s timer")
         Task { await fetchPrice() }
-        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: Constants.refreshInterval, repeats: true) { [weak self] _ in
             Logger.price.info("Timer fired — refreshing price")
             Task { await self?.fetchPrice() }
         }
+        timer?.tolerance = Constants.timerTolerance
     }
 
     deinit {
@@ -127,31 +124,32 @@ final class PriceService {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
 
-            // Always log the raw response body for debugging
+#if DEBUG
             if let body = String(data: data, encoding: .utf8) {
                 Logger.price.debug("API response body: \(body)")
             }
+#endif
 
-            let httpResponse = response as? HTTPURLResponse
-            Logger.price.debug("HTTP status: \(httpResponse?.statusCode ?? -1)")
-
-            // Attempt to decode a successful price response first
-            if let priceResponse = try? JSONDecoder().decode(PriceResponse.self, from: data),
-               let value = Double(priceResponse.price) {
-                Logger.price.info("Price fetched successfully: \(value)")
-                status = .value(value)
-                return
-            }
-
-            // Check for API-level error (e.g. invalid key, rate limit)
-            if let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                Logger.price.error("API error \(errorResponse.code): \(errorResponse.message)")
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                Logger.price.error("HTTP error: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                 status = .error
                 return
             }
 
-            Logger.price.error("Unable to parse price from response")
-            status = .error
+            Logger.price.debug("HTTP status: \(httpResponse.statusCode)")
+
+            let apiResponse = try JSONDecoder().decode(APIResponse.self, from: data)
+            if let priceStr = apiResponse.price, let value = Double(priceStr) {
+                Logger.price.info("Price fetched successfully: \(value)")
+                status = .value(value)
+            } else if let code = apiResponse.code, let msg = apiResponse.message {
+                Logger.price.error("API error \(code): \(msg)")
+                status = .error
+            } else {
+                Logger.price.error("Unable to parse price from response")
+                status = .error
+            }
         } catch {
             Logger.price.error("Price fetch failed: \(error.localizedDescription)")
             status = .error
