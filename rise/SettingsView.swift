@@ -30,14 +30,20 @@ struct SettingsView: View {
             TextField("Enter API Key", text: $apiKey)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: .infinity)
+                .onChange(of: apiKey) { _, _ in
+                    isSaved = false
+                }
 
             HStack(spacing: 10) {
                 // Save button — persists key + triggers immediate fetch
                 Button("Save") {
-                    UserDefaults.standard.set(apiKey, forKey: Constants.apiKeyStorageKey)
+                    PriceService.shared.updateAPIKey(apiKey)
                     isSaved = true
                     Logger.price.info("API key saved — triggering fetch")
-                    Task { await PriceService.shared.fetchPrice() }
+                    Task {
+                        await PriceService.shared.restartPollingIfNeeded()
+                        await PriceService.shared.fetchPrice()
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(apiKey.isEmpty)

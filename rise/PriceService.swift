@@ -54,6 +54,8 @@ final class PriceService {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = Constants.requestTimeout
         config.timeoutIntervalForResource = Constants.resourceTimeout
+        config.urlCache = nil
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: config)
     }()
 
@@ -61,6 +63,8 @@ final class PriceService {
     private var refreshTask: Task<Void, Never>?
 
     /// Unified decodable model covering both success and error responses.
+    private static let jsonDecoder = JSONDecoder()
+
     private struct APIResponse: Decodable, Sendable {
         let price: String?
         let code: Int?
@@ -69,19 +73,24 @@ final class PriceService {
 
     /// The Twelve Data API key persisted in UserDefaults.
     private var apiKey: String {
-        UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
+        didSet {
+            cachedRequest = PriceService.buildRequest(for: apiKey)
+        }
     }
 
-    /// Fully constructed request, or `nil` when no API key is set.
-    private var request: URLRequest? {
-        guard !apiKey.isEmpty else { return nil }
+    /// Cached URLRequest, rebuilt automatically when the API key changes.
+    private var cachedRequest: URLRequest?
+
+    /// Builds a URLRequest for the Twelve Data price endpoint, or `nil` when no key is set.
+    private static func buildRequest(for key: String) -> URLRequest? {
+        guard !key.isEmpty else { return nil }
         var components = URLComponents(string: Constants.apiBaseURL)
         components?.queryItems = [
             URLQueryItem(name: "symbol", value: Constants.goldSymbol),
         ]
         guard let url = components?.url else { return nil }
         var req = URLRequest(url: url)
-        req.setValue("apikey \(apiKey)", forHTTPHeaderField: "Authorization")
+        req.setValue("apikey \(key)", forHTTPHeaderField: "Authorization")
         return req
     }
 
@@ -92,6 +101,9 @@ final class PriceService {
     /// Performs an initial fetch and, when an API key is configured, starts
     /// a repeating timer that refreshes the price on every interval.
     private init() {
+        let key = UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
+        apiKey = key
+        cachedRequest = PriceService.buildRequest(for: key)
         Logger.price.info("Service initialized")
         Task { await fetchPrice() }
         startPollingIfNeeded()
@@ -126,13 +138,11 @@ final class PriceService {
     /// could be added if rate limiting becomes necessary.
     func fetchPrice() async {
         guard !isLoading else { return }
-        guard let request = request else {
+        guard let request = cachedRequest else {
             Logger.price.info("No API key configured — skipping fetch")
             status = .noKey
             return
         }
-
-        startPollingIfNeeded()
 
         isLoading = true
         defer { isLoading = false }
@@ -167,7 +177,7 @@ final class PriceService {
                 return
             }
 
-            let apiResponse = try JSONDecoder().decode(APIResponse.self, from: data)
+            let apiResponse = try Self.jsonDecoder.decode(APIResponse.self, from: data)
             if let priceStr = apiResponse.price, let value = Double(priceStr) {
                 Logger.price.info("Price fetched successfully: \(value)")
                 status = .value(value)
@@ -182,6 +192,17 @@ final class PriceService {
             Logger.price.error("Price fetch failed: \(error.localizedDescription)")
             status = .error
         }
+    }
+
+    // MARK: - Key Management
+
+    func updateAPIKey(_ newKey: String) {
+        apiKey = newKey
+        UserDefaults.standard.set(newKey, forKey: Constants.apiKeyStorageKey)
+    }
+
+    func restartPollingIfNeeded() {
+        startPollingIfNeeded()
     }
 
     // MARK: - Private Helpers
