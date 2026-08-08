@@ -1,29 +1,30 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/hanchaoyang/rise/main/.github/assets/hero-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/hanchaoyang/rise/main/.github/assets/hero-light.png">
-  <img alt="Rise" src="https://raw.githubusercontent.com/hanchaoyang/rise/main/.github/assets/hero-light.png">
-</picture>
+<div align="center">
+  <h1>Rise</h1>
+  <p>Real-time gold price in your macOS menu bar.</p>
+
+  <sub>Built with SwiftUI &middot; macOS 26+ &middot; Powered by <a href="https://twelvedata.com">Twelve Data</a></sub>
+</div>
+
+<br>
 
 [中文](./README.zh-CN.md)
 
-Rise — real-time gold price in your macOS menu bar. XAU/USD, auto-refreshed every 5 minutes. No windows, no dock icon, no distractions.
-
-> **macOS 26+** &nbsp;|&nbsp; **SwiftUI** &nbsp;|&nbsp; Powered by [Twelve Data](https://twelvedata.com)
+Rise displays the current XAU/USD price directly in your menu bar, auto-refreshed every 5 minutes. No windows, no dock icon — just the number you need.
 
 ## Get Started
 
-1. Download the latest `.dmg` from [Releases](https://github.com/hanchaoyang/rise/releases) and drag to Applications
-2. Get a free API key at [twelvedata.com](https://twelvedata.com)
+1. Grab the latest `.dmg` from [Releases](https://github.com/hanchaoyang/rise/releases) and drag to **Applications**
+2. Sign up at [twelvedata.com](https://twelvedata.com) to get a **free API key**
 3. Click the price in your menu bar → **Settings** → paste your key → **Save**
 
-That's it. The price appears within seconds.
+The price appears within seconds.
 
-| | |
+| Action | Shortcut |
 |---|---|
-| Refresh | Click price → **Refresh** |
-| Remove key | Clear the field in Settings → **Save** |
+| Refresh price | Click price → **Refresh** |
+| Remove API key | Clear the field in Settings → **Save** |
 
-> Free tier: 800 calls/day. Rise uses ~288 — no worries.
+> The free tier gives you 800 calls per day. Rise uses roughly 288 — you'll never hit the limit.
 
 ## Build from Source
 
@@ -35,14 +36,16 @@ xcodebuild -project rise.xcodeproj -scheme rise -configuration Release build
 
 ## Status Reference
 
-| Menu bar | Meaning |
-|----------|---------|
-| `Gold $2,650.12` | Price fetched successfully |
-| `Gold ---` | Just launched, fetching |
-| `Gold No API Key` | Configure your key in Settings |
-| `Gold Invalid Key` | Key rejected — get a new one at twelvedata.com |
-| `Gold Rate Limited` | Daily limit reached — resets automatically |
-| `Gold Fetch Failed` | Network issue — retry or wait |
+<sub>The menu bar always shows your current state.</sub>
+
+| Display | Status |
+|---|---|
+| `Gold $2,650.12` | All good — latest price fetched |
+| `Gold ---` | Just launched, fetching data |
+| `Gold No API Key` | Head to Settings and add your key |
+| `Gold Invalid Key` | Your key was rejected — grab a new one at twelvedata.com |
+| `Gold Rate Limited` | Free tier limit reached for today — resets automatically |
+| `Gold Fetch Failed` | Network hiccup — try again or wait |
 
 ## License
 
