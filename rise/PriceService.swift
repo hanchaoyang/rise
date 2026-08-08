@@ -74,15 +74,17 @@ final class PriceService {
         UserDefaults.standard.string(forKey: "apiKey") ?? ""
     }
 
-    /// Fully constructed request URL, or `nil` when no API key is set.
-    private var requestURL: URL? {
+    /// Fully constructed request, or `nil` when no API key is set.
+    private var request: URLRequest? {
         guard !apiKey.isEmpty else { return nil }
         var components = URLComponents(string: "https://api.twelvedata.com/price")
         components?.queryItems = [
             URLQueryItem(name: "symbol", value: "XAU/USD"),
-            URLQueryItem(name: "apikey", value: apiKey),
         ]
-        return components?.url
+        guard let url = components?.url else { return nil }
+        var req = URLRequest(url: url)
+        req.setValue("apikey \(apiKey)", forHTTPHeaderField: "Authorization")
+        return req
     }
 
     // MARK: - Initialization
@@ -112,7 +114,7 @@ final class PriceService {
     /// or missing API key. Safe to call from any context — a loading guard
     /// could be added if rate limiting becomes necessary.
     func fetchPrice() async {
-        guard let url = requestURL else {
+        guard let request = request else {
             Logger.price.info("No API key configured — skipping fetch")
             status = .noKey
             return
@@ -122,7 +124,7 @@ final class PriceService {
         defer { isLoading = false }
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.data(for: request)
 
             // Always log the raw response body for debugging
             if let body = String(data: data, encoding: .utf8) {
