@@ -9,7 +9,7 @@ import OSLog
 /// Uses the [Twelve Data](https://twelvedata.com) API to retrieve real-time
 /// `XAU/USD` quotes. Automatically refreshes every 300 seconds via a repeating
 /// timer. Conforms to `Observable` so SwiftUI views react to price changes.
-@Observable
+@MainActor @Observable
 final class PriceService {
 
     /// Shared singleton instance.
@@ -61,7 +61,7 @@ final class PriceService {
     private var refreshTask: Task<Void, Never>?
 
     /// Unified decodable model covering both success and error responses.
-    private struct APIResponse: Codable, Sendable {
+    private struct APIResponse: Decodable, Sendable {
         let price: String?
         let code: Int?
         let message: String?
@@ -97,7 +97,13 @@ final class PriceService {
         Task { await fetchPrice() }
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(Constants.refreshInterval))
+                do {
+                    try await Task.sleep(for: .seconds(Constants.refreshInterval))
+                } catch is CancellationError {
+                    break
+                } catch {
+                    Logger.price.error("Timer sleep failed: \(error.localizedDescription)")
+                }
                 guard let self, !self.apiKey.isEmpty else {
                     Logger.price.info("Timer fired — no API key, skipping")
                     continue
@@ -108,10 +114,6 @@ final class PriceService {
         }
     }
 
-    deinit {
-        refreshTask?.cancel()
-    }
-
     // MARK: - Public API
 
     /// Fetches the latest gold price from the Twelve Data API.
@@ -119,7 +121,6 @@ final class PriceService {
     /// Updates `status` to the appropriate value upon success, failure,
     /// or missing API key. Safe to call from any context — a loading guard
     /// could be added if rate limiting becomes necessary.
-    @MainActor
     func fetchPrice() async {
         guard !isLoading else { return }
         guard let request = request else {
