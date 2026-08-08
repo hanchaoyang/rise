@@ -3,7 +3,8 @@ import SwiftUI
 /// Entry point of the application.
 ///
 /// Displays the current gold price in the macOS menu bar via ``MenuBarExtra``
-/// and provides a settings window for configuring the Twelve Data API key.
+/// and provides a settings window for configuring the Twelve Data API key
+/// along with an about window.
 @main
 struct RiseApp: App {
     private let priceService = PriceService.shared
@@ -23,6 +24,13 @@ struct RiseApp: App {
             SettingsView()
         }
         .defaultSize(width: Constants.settingsWindowWidth, height: Constants.settingsWindowHeight)
+
+        // MARK: - About
+
+        Window("About", id: "about") {
+            AboutView()
+        }
+        .defaultSize(width: Constants.aboutWindowWidth, height: Constants.aboutWindowHeight)
     }
 
     // MARK: - Price Label

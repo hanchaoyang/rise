@@ -47,7 +47,7 @@ struct SettingsView: View {
                 if isSaved {
                     Text("Saved")
                         .foregroundStyle(.secondary)
-                        .font(.caption)
+                .font(.footnote)
                 }
             }
 
@@ -57,5 +57,10 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
+        .onAppear {
+            DispatchQueue.main.async {
+                NSApp.windows.first { $0.title.contains("Settings") }?.title = "Settings"
+            }
+        }
     }
 }

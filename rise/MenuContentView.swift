@@ -5,6 +5,7 @@ import SwiftUI
 /// Dropdown menu shown when the user clicks the menu bar item.
 struct MenuContentView: View {
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
     private let priceService = PriceService.shared
 
     var body: some View {
@@ -14,12 +15,19 @@ struct MenuContentView: View {
         }
         .disabled(priceService.isLoading)
 
-        Divider()
-
         // Open settings window (brings app to foreground first)
-        Button("Settings...") {
+        Button("Settings") {
             NSApp.activate(ignoringOtherApps: true)
             openSettings()
+        }
+
+        // About this application
+        Button("About") {
+            NSApp.activate(ignoringOtherApps: true)
+            openWindow(id: "about")
+            DispatchQueue.main.async {
+                NSApp.windows.first { $0.title == "About" }?.makeKeyAndOrderFront(nil)
+            }
         }
 
         Divider()

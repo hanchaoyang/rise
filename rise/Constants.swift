@@ -7,6 +7,8 @@ enum Constants {
     static let refreshInterval: TimeInterval = 300
     static let settingsWindowWidth: CGFloat = 440
     static let settingsWindowHeight: CGFloat = 220
+    static let aboutWindowWidth: CGFloat = 280
+    static let aboutWindowHeight: CGFloat = 220
     static let requestTimeout: TimeInterval = 30
     static let resourceTimeout: TimeInterval = 60
 }
