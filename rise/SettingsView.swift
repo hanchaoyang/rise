@@ -55,9 +55,6 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-            .padding(24)
-            .onAppear {
-                isSaved = !apiKey.isEmpty
-            }
+        .padding(24)
     }
 }

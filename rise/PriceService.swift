@@ -50,7 +50,7 @@ final class PriceService {
     // MARK: - Private Properties
 
     /// Custom URL session with explicit timeout configuration.
-    private let urlSession: URLSession = {
+    private static let urlSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = Constants.requestTimeout
         config.timeoutIntervalForResource = Constants.resourceTimeout
@@ -89,24 +89,28 @@ final class PriceService {
 
     /// Private initializer enforces the singleton pattern.
     ///
-    /// Kicks off an immediate fetch request and starts a repeating timer
-    /// that refreshes the price every 300 seconds (5 minutes).
+    /// Performs an initial fetch and, when an API key is configured, starts
+    /// a repeating timer that refreshes the price on every interval.
     private init() {
-        Logger.price.info("Service initialized — starting initial fetch and \(Constants.refreshInterval)s timer")
+        Logger.price.info("Service initialized")
         Task { await fetchPrice() }
-        refreshTask = Task {
+        startPollingIfNeeded()
+    }
+
+    // MARK: - Polling
+
+    /// Starts or restarts the polling timer when an API key is available.
+    ///
+    /// Cancels any previously active timer. If no API key is set the method
+    /// is a no-op.
+    private func startPollingIfNeeded() {
+        refreshTask?.cancel()
+        guard !apiKey.isEmpty else { return }
+        Logger.price.info("Starting polling with \(Constants.refreshInterval)s interval")
+        refreshTask = Task<Void, Never> {
             while !Task.isCancelled {
-                do {
-                    try await Task.sleep(for: .seconds(Constants.refreshInterval))
-                } catch is CancellationError {
-                    break
-                } catch {
-                    Logger.price.error("Timer sleep failed: \(error.localizedDescription)")
-                }
-                guard !apiKey.isEmpty else {
-                    Logger.price.info("Timer fired — no API key, skipping")
-                    continue
-                }
+                try? await Task.sleep(for: .seconds(Constants.refreshInterval))
+                if Task.isCancelled { break }
                 Logger.price.info("Timer fired — refreshing price")
                 await fetchPrice()
             }
@@ -128,11 +132,13 @@ final class PriceService {
             return
         }
 
+        startPollingIfNeeded()
+
         isLoading = true
         defer { isLoading = false }
 
         do {
-            let (data, response) = try await urlSession.data(for: request)
+            let (data, response) = try await Self.urlSession.data(for: request)
 
             logResponseBody(data)
 
