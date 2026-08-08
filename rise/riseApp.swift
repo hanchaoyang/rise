@@ -26,8 +26,6 @@ struct RiseApp: App {
     // MARK: - Price Label
 
     /// Human-readable menu bar label derived from the current price status.
-    private static let posixLocale = Locale(identifier: "en_US_POSIX")
-
     private var priceLabel: String {
         switch PriceService.shared.status {
         case .initial:     return "Gold $---"
@@ -37,7 +35,6 @@ struct RiseApp: App {
         case .value(let v):
             let formatted = v.formatted(
                 .number.precision(.fractionLength(2))
-                .locale(Self.posixLocale)
             )
             return "Gold $\(formatted)"
         case .error:       return "Gold $Fetch Failed"

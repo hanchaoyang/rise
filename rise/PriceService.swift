@@ -92,6 +92,10 @@ final class PriceService {
     ///
     /// Kicks off an immediate fetch request and starts a repeating timer
     /// that refreshes the price every 300 seconds (5 minutes).
+    deinit {
+        refreshTask?.cancel()
+    }
+
     private init() {
         Logger.price.info("Service initialized — starting initial fetch and \(Constants.refreshInterval)s timer")
         Task { await fetchPrice() }
