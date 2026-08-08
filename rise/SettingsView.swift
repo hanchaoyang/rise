@@ -41,7 +41,7 @@ struct SettingsView: View {
                     isSaved = true
                     Logger.price.info("API key saved — triggering fetch")
                     Task {
-                        await PriceService.shared.restartPollingIfNeeded()
+                        await PriceService.shared.startPollingIfNeeded()
                         await PriceService.shared.fetchPrice()
                     }
                 }

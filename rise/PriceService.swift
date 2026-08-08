@@ -50,7 +50,7 @@ final class PriceService {
     // MARK: - Private Properties
 
     /// Custom URL session with explicit timeout configuration.
-    private static let urlSession: URLSession = {
+    private nonisolated static let urlSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = Constants.requestTimeout
         config.timeoutIntervalForResource = Constants.resourceTimeout
@@ -75,6 +75,9 @@ final class PriceService {
     private var apiKey: String {
         didSet {
             cachedRequest = PriceService.buildRequest(for: apiKey)
+            if apiKey.isEmpty {
+                refreshTask?.cancel()
+            }
         }
     }
 
@@ -115,14 +118,17 @@ final class PriceService {
     ///
     /// Cancels any previously active timer. If no API key is set the method
     /// is a no-op.
-    private func startPollingIfNeeded() {
+    func startPollingIfNeeded() {
         refreshTask?.cancel()
         guard !apiKey.isEmpty else { return }
         Logger.price.info("Starting polling with \(Constants.refreshInterval)s interval")
         refreshTask = Task<Void, Never> {
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(Constants.refreshInterval))
-                if Task.isCancelled { break }
+                do {
+                    try await Task.sleep(for: .seconds(Constants.refreshInterval))
+                } catch {
+                    break
+                }
                 Logger.price.info("Timer fired — refreshing price")
                 await fetchPrice()
             }
@@ -199,10 +205,6 @@ final class PriceService {
     func updateAPIKey(_ newKey: String) {
         apiKey = newKey
         UserDefaults.standard.set(newKey, forKey: Constants.apiKeyStorageKey)
-    }
-
-    func restartPollingIfNeeded() {
-        startPollingIfNeeded()
     }
 
     // MARK: - Private Helpers
