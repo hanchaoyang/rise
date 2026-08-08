@@ -50,7 +50,7 @@ final class PriceService {
     // MARK: - Private Properties
 
     /// Custom URL session with explicit timeout configuration.
-    private nonisolated static let urlSession: URLSession = {
+    private static let urlSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = Constants.requestTimeout
         config.timeoutIntervalForResource = Constants.resourceTimeout
@@ -155,8 +155,13 @@ final class PriceService {
 
         do {
             let (data, response) = try await Self.urlSession.data(for: request)
+            try Task.checkCancellation()
 
-            logResponseBody(data)
+#if DEBUG
+            if let body = String(data: data, encoding: .utf8) {
+                Logger.price.debug("API response body: \(body)")
+            }
+#endif
 
             guard let httpResponse = response as? HTTPURLResponse else {
                 Logger.price.error("Invalid response type")
@@ -167,7 +172,7 @@ final class PriceService {
             Logger.price.debug("HTTP status: \(httpResponse.statusCode)")
 
             switch httpResponse.statusCode {
-            case 200...299:
+            case 200:
                 break
             case 401:
                 Logger.price.error("HTTP 401 — API key invalid or expired")
@@ -205,16 +210,5 @@ final class PriceService {
     func updateAPIKey(_ newKey: String) {
         apiKey = newKey
         UserDefaults.standard.set(newKey, forKey: Constants.apiKeyStorageKey)
-    }
-
-    // MARK: - Private Helpers
-
-    /// Logs the raw API response body in debug builds only.
-    private func logResponseBody(_ data: Data) {
-        #if DEBUG
-        if let body = String(data: data, encoding: .utf8) {
-            Logger.price.debug("API response body: \(body)")
-        }
-        #endif
-    }
-}
+        startPollingIfNeeded()
+    }}

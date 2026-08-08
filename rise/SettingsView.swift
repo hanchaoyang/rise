@@ -30,7 +30,7 @@ struct SettingsView: View {
             TextField("Enter API Key", text: $apiKey)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: .infinity)
-                .onChange(of: apiKey) { _, _ in
+                .onChange(of: apiKey) { oldValue, newValue in
                     isSaved = false
                 }
 
@@ -41,7 +41,6 @@ struct SettingsView: View {
                     isSaved = true
                     Logger.price.info("API key saved — triggering fetch")
                     Task {
-                        await PriceService.shared.startPollingIfNeeded()
                         await PriceService.shared.fetchPrice()
                     }
                 }
