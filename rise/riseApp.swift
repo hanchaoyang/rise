@@ -30,16 +30,16 @@ struct RiseApp: App {
     /// Human-readable menu bar label derived from the current price status.
     private var priceLabel: String {
         switch priceService.status {
-        case .initial:     return "Gold $---"
-        case .noKey:       return "Gold $No API Key"
-        case .unauthorized:return "Gold $Invalid Key"
-        case .rateLimited: return "Gold $Rate Limited"
+        case .initial:     return "Gold  ---"
+        case .noKey:       return "Gold  No API Key"
+        case .unauthorized:return "Gold  Invalid Key"
+        case .rateLimited: return "Gold  Rate Limited"
         case .value(let v):
             let formatted = v.formatted(
                 .number.precision(.fractionLength(2))
             )
-            return "Gold $\(formatted)"
-        case .error:       return "Gold $Fetch Failed"
+            return "Gold  $\(formatted)"
+        case .error:       return "Gold  Fetch Failed"
         }
     }
 }
