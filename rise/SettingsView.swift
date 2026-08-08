@@ -42,7 +42,6 @@ struct SettingsView: View {
                     Logger.price.info("API key saved — triggering fetch")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(apiKey.isEmpty)
 
                 // Feedback label shown after a successful save
                 if isSaved {
