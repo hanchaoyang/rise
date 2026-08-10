@@ -13,10 +13,6 @@ struct AboutView: View {
     private let repoURL = URL(string: "https://github.com/hanchaoyang/rise")
     private let loc = LocalizationManager.shared
 
-    /// Cached reference to the About window for title updates after language
-    /// changes.
-    @State private var aboutWindow: NSWindow?
-
     // MARK: - Body
 
     var body: some View {
@@ -58,23 +54,6 @@ struct AboutView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            DispatchQueue.main.async {
-                aboutWindow = NSApp.windows.first {
-                    $0.identifier?.rawValue == "about"
-                }
-                updateAboutWindowTitle()
-            }
-        }
-        .onChange(of: loc.currentLanguage) { _, _ in
-            updateAboutWindowTitle()
-        }
-    }
-
-    // MARK: - Helpers
-
-    /// Updates the About window title to match the currently active language.
-    private func updateAboutWindowTitle() {
-        aboutWindow?.title = loc.localizedString(forKey: "About")
+        .localizedWindowTitle("About")
     }
 }

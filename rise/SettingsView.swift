@@ -25,10 +25,6 @@ struct SettingsView: View {
     /// and applied only when the user taps Save.
     @State private var selectedLanguage = LocalizationManager.shared.currentLanguage
 
-    /// Cached reference to the Settings window for title updates after language
-    /// changes.
-    @State private var settingsWindow: NSWindow?
-
     private let loc = LocalizationManager.shared
 
     // MARK: - Body
@@ -69,7 +65,6 @@ struct SettingsView: View {
                     if selectedLanguage != loc.currentLanguage {
                         loc.currentLanguage = selectedLanguage
                     }
-                    updateSettingsWindowTitle()
                     Logger.price.info("API key saved — triggering fetch")
                 } label: {
                     Text(verbatim: loc.localizedString(forKey: "Save"))
@@ -90,22 +85,6 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
-        .onAppear {
-            DispatchQueue.main.async {
-                settingsWindow = NSApp.keyWindow
-                    ?? NSApp.windows.first { $0.title.contains("Settings") }
-                updateSettingsWindowTitle()
-            }
-        }
-        .onChange(of: loc.currentLanguage) { _, _ in
-            updateSettingsWindowTitle()
-        }
-    }
-
-    // MARK: - Helpers
-
-    /// Updates the Settings window title to match the currently active language.
-    private func updateSettingsWindowTitle() {
-        settingsWindow?.title = loc.localizedString(forKey: "Settings")
+        .localizedWindowTitle("Settings")
     }
 }

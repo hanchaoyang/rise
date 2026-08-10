@@ -30,9 +30,7 @@ struct MenuContentView: View {
         Button {
             NSApp.activate(ignoringOtherApps: true)
             openWindow(id: "about")
-            DispatchQueue.main.async {
-                NSApp.windows.first { $0.identifier?.rawValue == "about" }?.makeKeyAndOrderFront(nil)
-            }
+            NSApp.windows.first { $0.identifier?.rawValue == "about" }?.makeKeyAndOrderFront(nil)
         } label: {
             Text(verbatim: loc.localizedString(forKey: "About"))
         }

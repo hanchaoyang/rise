@@ -94,12 +94,11 @@ final class LocalizationManager {
 
     /// Returns the translation for `key` in the currently active language.
     ///
-    /// The `_ = currentLanguage` line establishes an `@Observable` dependency
-    /// so that SwiftUI views calling this method are re-evaluated when the
+    /// Reading `currentLanguage` establishes an `@Observable` dependency so
+    /// that SwiftUI views calling this method are re-evaluated when the
     /// language changes. Unresolved keys fall back to the English table and
     /// finally to the key itself.
     func localizedString(forKey key: String) -> String {
-        _ = currentLanguage
         if let value = translations[currentLanguage]?[key] { return value }
         if let value = translations[.english]?[key] { return value }
         return key

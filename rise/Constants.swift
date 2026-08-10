@@ -1,6 +1,9 @@
 import Foundation
 
-enum Constants {
+/// App-wide constants.
+struct Constants {
+    private init() {}
+
     static let apiKeyStorageKey = "apiKey"
     static let languageStorageKey = "appLanguage"
     static let goldSymbol = "XAU/USD"
