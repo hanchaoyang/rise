@@ -4,10 +4,13 @@ import Foundation
 
 /// Singleton that manages runtime language switching.
 ///
-/// Loads translations from the String Catalog (``Localizable.xcstrings``)
-/// into an in-memory dictionary at startup and resolves lookups from that
-/// dictionary at runtime.  This bypasses ``CFBundle`` caching so that
-/// language changes take effect immediately without requiring an app restart.
+/// Loads the String Catalog's compiled ``Localizable.strings`` resources into
+/// an in-memory dictionary at startup and resolves lookups from that
+/// dictionary at runtime, so language changes take effect immediately without
+/// requiring an app restart. Also keeps `AppleLanguages` in sync so system
+/// APIs such as `Locale.preferredLanguages` follow the chosen language.
+/// Conforms to `Observable` so SwiftUI views automatically refresh when the
+/// language changes.
 @Observable
 final class LocalizationManager {
 
@@ -36,12 +39,13 @@ final class LocalizationManager {
 
     // MARK: - Properties
 
-    /// Currently active language.  Changing this property persists the
-    /// selection to ``UserDefaults`` and triggers ``@Observable`` re-renders.
+    /// Currently active language. Changing this property persists the selection
+    /// and updates `AppleLanguages` so that system APIs such as
+    /// `Locale.preferredLanguages` stay in sync with the chosen language.
     var currentLanguage: SupportedLanguage {
         didSet {
-            UserDefaults.standard.set(currentLanguage.rawValue,
-                                      forKey: Constants.languageStorageKey)
+            UserDefaults.standard.set(currentLanguage.rawValue, forKey: Constants.languageStorageKey)
+            UserDefaults.standard.set([currentLanguage.rawValue], forKey: "AppleLanguages")
         }
     }
 
@@ -62,37 +66,21 @@ final class LocalizationManager {
         } else {
             currentLanguage = .english
         }
-
+        UserDefaults.standard.set([currentLanguage.rawValue], forKey: "AppleLanguages")
         loadTranslations()
     }
 
-    /// Parses ``Localizable.xcstrings`` into the in-memory translation table.
+    /// Loads the compiled `Localizable.strings` table for every supported
+    /// language into the in-memory translation table.
     private func loadTranslations() {
-        guard let url = Bundle.main.url(forResource: "Localizable",
-                                        withExtension: "xcstrings"),
-              let data = try? Data(contentsOf: url),
-              let root = try? JSONSerialization.jsonObject(with: data)
-                as? [String: Any],
-              let strings = root["strings"] as? [String: Any]
-        else {
-            translations[.english] = [:]
-            return
-        }
-
         for language in SupportedLanguage.allCases {
-            var dict: [String: String] = [:]
-            for (key, entry) in strings {
-                guard let entryDict = entry as? [String: Any],
-                      let localizations = entryDict["localizations"]
-                        as? [String: Any],
-                      let langEntry = localizations[language.rawValue]
-                        as? [String: Any],
-                      let stringUnit = langEntry["stringUnit"] as? [String: Any],
-                      let value = stringUnit["value"] as? String
-                else { continue }
-                dict[key] = value
-            }
-            translations[language] = dict
+            guard let url = Bundle.main.url(forResource: "Localizable",
+                                            withExtension: "strings",
+                                            subdirectory: nil,
+                                            localization: language.rawValue),
+                  let table = NSDictionary(contentsOf: url) as? [String: String]
+            else { continue }
+            translations[language] = table
         }
     }
 
@@ -100,8 +88,9 @@ final class LocalizationManager {
 
     /// Returns the translation for `key` in the currently active language.
     ///
-    /// ``currentLanguage`` is accessed so that ``@Observable`` tracking
-    /// re-evaluates callers when the language changes.
+    /// The `_ = currentLanguage` line establishes an `@Observable` dependency
+    /// so that SwiftUI views calling this method are re-evaluated when the
+    /// language changes.
     func localizedString(forKey key: String) -> String {
         _ = currentLanguage
         return translations[currentLanguage]?[key]
