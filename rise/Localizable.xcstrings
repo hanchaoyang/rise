@@ -47,6 +47,29 @@
         }
       }
     },
+    "Fetch Failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetch Failed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获取失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "獲取失敗"
+          }
+        }
+      }
+    },
     "GitHub Repository": {
       "extractionState": "manual",
       "localizations": {
@@ -70,140 +93,48 @@
         }
       }
     },
-    "Gold  $%@": {
+    "Gold  %@": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gold  $%@"
+            "value": "Gold  %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "黄金  $%@"
+            "value": "黄金  %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "黃金  $%@"
+            "value": "黃金  %@"
           }
         }
       }
     },
-    "Gold  ---": {
+    "Invalid Key": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gold  ---"
+            "value": "Invalid Key"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "黄金  ---"
+            "value": "API Key 无效"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "黃金  ---"
-          }
-        }
-      }
-    },
-    "Gold  Fetch Failed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gold  Fetch Failed"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黄金  获取失败"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黃金  獲取失敗"
-          }
-        }
-      }
-    },
-    "Gold  Invalid Key": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gold  Invalid Key"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黄金  API Key 无效"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黃金  API Key 無效"
-          }
-        }
-      }
-    },
-    "Gold  No API Key": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gold  No API Key"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黄金  未设置 API Key"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黃金  未設定 API Key"
-          }
-        }
-      }
-    },
-    "Gold  Rate Limited": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gold  Rate Limited"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黄金  请求过于频繁"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "黃金  請求過於頻繁"
+            "value": "API Key 無效"
           }
         }
       }
@@ -231,6 +162,29 @@
         }
       }
     },
+    "No API Key": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No API Key"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未设置 API Key"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未設定 API Key"
+          }
+        }
+      }
+    },
     "Quit": {
       "extractionState": "manual",
       "localizations": {
@@ -250,6 +204,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "結束"
+          }
+        }
+      }
+    },
+    "Rate Limited": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate Limited"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请求过于频繁"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請求過於頻繁"
           }
         }
       }

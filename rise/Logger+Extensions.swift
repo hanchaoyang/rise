@@ -13,4 +13,10 @@ extension Logger {
         subsystem: "io.github.hanchaoyang.rise",
         category: "Localization"
     )
+
+    /// Logger instance scoped to the settings subsystem.
+    static let settings = Logger(
+        subsystem: "io.github.hanchaoyang.rise",
+        category: "Settings"
+    )
 }

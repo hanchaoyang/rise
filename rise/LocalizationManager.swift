@@ -12,7 +12,7 @@ import OSLog
 /// APIs such as `Locale.preferredLanguages` follow the chosen language.
 /// Conforms to `Observable` so SwiftUI views automatically refresh when the
 /// language changes.
-@Observable
+@MainActor @Observable
 final class LocalizationManager {
 
     /// Shared singleton instance.
@@ -80,7 +80,9 @@ final class LocalizationManager {
                                             withExtension: "strings",
                                             subdirectory: nil,
                                             localization: language.rawValue),
-                  let table = NSDictionary(contentsOf: url) as? [String: String]
+                  let data = try? Data(contentsOf: url),
+                  let plist = try? PropertyListSerialization.propertyList(from: data, format: nil),
+                  let table = plist as? [String: String]
             else {
                 Logger.loc.warning("Failed to load Localizable.strings for \(language.rawValue, privacy: .public)")
                 continue

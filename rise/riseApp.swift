@@ -38,23 +38,24 @@ struct RiseApp: App {
 
     /// Human-readable menu bar label derived from the current price status.
     private var priceLabel: String {
+        let detail: String
         switch priceService.status {
         case .initial:
-            return loc.localizedString(forKey: "Gold  ---")
+            detail = "---"
         case .noKey:
-            return loc.localizedString(forKey: "Gold  No API Key")
+            detail = loc.localizedString(forKey: "No API Key")
         case .unauthorized:
-            return loc.localizedString(forKey: "Gold  Invalid Key")
+            detail = loc.localizedString(forKey: "Invalid Key")
         case .rateLimited:
-            return loc.localizedString(forKey: "Gold  Rate Limited")
+            detail = loc.localizedString(forKey: "Rate Limited")
         case .value(let v):
-            let formatted = v.formatted(
+            detail = "$" + v.formatted(
                 .number.precision(.fractionLength(2)).grouping(.never)
             )
-            let template = loc.localizedString(forKey: "Gold  $%@")
-            return String(format: template, formatted)
         case .error:
-            return loc.localizedString(forKey: "Gold  Fetch Failed")
+            detail = loc.localizedString(forKey: "Fetch Failed")
         }
+        let template = loc.localizedString(forKey: "Gold  %@")
+        return String(format: template, detail)
     }
 }

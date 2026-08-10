@@ -56,6 +56,9 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             .labelsHidden()
             .frame(maxWidth: .infinity, alignment: .leading)
+            .onChange(of: selectedLanguage) { _, _ in
+                isSaved = false
+            }
 
             HStack(spacing: 10) {
                 // Save button — persists key and language, triggers immediate fetch
@@ -65,7 +68,7 @@ struct SettingsView: View {
                     if selectedLanguage != loc.currentLanguage {
                         loc.currentLanguage = selectedLanguage
                     }
-                    Logger.price.info("API key saved — triggering fetch")
+                    Logger.settings.info("API key saved — triggering fetch")
                 } label: {
                     Text(verbatim: loc.localizedString(forKey: "Save"))
                 }

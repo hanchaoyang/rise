@@ -74,42 +74,50 @@ final class PriceService {
     /// The Twelve Data API key persisted in UserDefaults.
     private var apiKey: String = ""
 
-    /// Cached URLRequest, rebuilt automatically when the API key changes.
-    private var cachedRequest: URLRequest?
+    /// The current URLRequest, rebuilt automatically when the API key changes.
+    private var currentRequest: URLRequest?
 
     /// Builds a URLRequest for the Twelve Data price endpoint, or `nil` when no key is set.
     private static func buildRequest(for key: String) -> URLRequest? {
         guard !key.isEmpty else { return nil }
-        var components = URLComponents(string: Constants.apiBaseURL)
-        components?.queryItems = [
+        guard var components = URLComponents(string: Constants.apiBaseURL) else {
+            Logger.price.error("Failed to create URL components for \(Constants.apiBaseURL, privacy: .public)")
+            return nil
+        }
+        components.queryItems = [
             URLQueryItem(name: "symbol", value: Constants.goldSymbol),
         ]
-        guard let url = components?.url else { return nil }
+        guard let url = components.url else {
+            Logger.price.error("Failed to build URL from components")
+            return nil
+        }
         var req = URLRequest(url: url)
         req.setValue("apikey \(key)", forHTTPHeaderField: "Authorization")
         return req
     }
 
-    /// Sets the API key and rebuilds the cached request.
+    /// Sets the API key and rebuilds the current request.
     /// Property observers do not fire during `init`, so this method ensures the
-    /// cached request is always kept in sync.
+    /// request is always kept in sync.
     private func setAPIKey(_ key: String) {
         apiKey = key
-        cachedRequest = PriceService.buildRequest(for: key)
+        currentRequest = PriceService.buildRequest(for: key)
     }
 
     // MARK: - Initialization
 
     /// Private initializer enforces the singleton pattern.
     ///
-    /// Performs an initial fetch and, when an API key is configured, starts
-    /// a repeating timer that refreshes the price on every interval.
+    /// Performs an initial fetch and, once it completes, starts the repeating
+    /// timer that refreshes the price on every interval when a key is set.
     private init() {
         let key = UserDefaults.standard.string(forKey: Constants.apiKeyStorageKey) ?? ""
         setAPIKey(key)
         Logger.price.info("Service initialized")
-        Task { await fetchPrice() }
-        startPollingIfNeeded()
+        Task {
+            await fetchPrice()
+            startPollingIfNeeded()
+        }
     }
 
     // MARK: - Polling
@@ -144,7 +152,7 @@ final class PriceService {
     /// could be added if rate limiting becomes necessary.
     func fetchPrice() async {
         guard !isLoading else { return }
-        guard let request = cachedRequest else {
+        guard let request = currentRequest else {
             Logger.price.info("No API key configured — skipping fetch")
             status = .noKey
             return

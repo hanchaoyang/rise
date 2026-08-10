@@ -33,22 +33,12 @@ struct AboutView: View {
                 .foregroundStyle(.secondary)
 
             // GitHub link
-            Button {
-                guard let repoURL else { return }
-                NSWorkspace.shared.open(repoURL)
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "link")
-                    Text(verbatim: loc.localizedString(forKey: "GitHub Repository"))
-                }
-            }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .onHover { inside in
-                if inside {
-                    NSCursor.pointingHand.push()
-                } else {
-                    NSCursor.pointingHand.pop()
+            if let repoURL {
+                Link(destination: repoURL) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "link")
+                        Text(verbatim: loc.localizedString(forKey: "GitHub Repository"))
+                    }
                 }
             }
         }
