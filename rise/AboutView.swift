@@ -10,7 +10,7 @@ struct AboutView: View {
 
     private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Rise"
     private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1"
-    private let repoURL = URL(string: "https://github.com/hanchaoyang/rise")!
+    private let repoURL = URL(string: "https://github.com/hanchaoyang/rise")
     private let loc = LocalizationManager.shared
 
     /// Cached reference to the About window for title updates after language
@@ -38,6 +38,7 @@ struct AboutView: View {
 
             // GitHub link
             Button {
+                guard let repoURL else { return }
                 NSWorkspace.shared.open(repoURL)
             } label: {
                 HStack(spacing: 4) {

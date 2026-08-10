@@ -7,4 +7,10 @@ extension Logger {
         subsystem: "io.github.hanchaoyang.rise",
         category: "PriceService"
     )
+
+    /// Logger instance scoped to the localization subsystem.
+    static let loc = Logger(
+        subsystem: "io.github.hanchaoyang.rise",
+        category: "Localization"
+    )
 }

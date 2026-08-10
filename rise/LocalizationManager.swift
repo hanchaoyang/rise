@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 // MARK: - Localization Manager
 
@@ -39,27 +40,27 @@ final class LocalizationManager {
 
     // MARK: - Properties
 
-    /// Currently active language. Changing this property persists the selection
-    /// and updates `AppleLanguages` so that system APIs such as
-    /// `Locale.preferredLanguages` stay in sync with the chosen language.
+    /// Currently active language. Changing this property persists the selection,
+    /// updates `AppleLanguages`, and records the change in the unified log.
     var currentLanguage: SupportedLanguage {
         didSet {
-            UserDefaults.standard.set(currentLanguage.rawValue, forKey: Constants.languageStorageKey)
-            UserDefaults.standard.set([currentLanguage.rawValue], forKey: "AppleLanguages")
+            let language = currentLanguage.rawValue
+            UserDefaults.standard.set(language, forKey: Constants.languageStorageKey)
+            UserDefaults.standard.set([language], forKey: "AppleLanguages")
+            Logger.loc.info("Language switched to \(language, privacy: .public)")
         }
     }
 
     /// All languages offered in the Settings picker.
     let availableLanguages = SupportedLanguage.allCases
 
-    // MARK: - Private
-
     /// Translation lookup table keyed by language then source key.
-    private var translations: [SupportedLanguage: [String: String]] = [:]
+    private let translations: [SupportedLanguage: [String: String]]
 
     // MARK: - Initialization
 
     private init() {
+        translations = Self.loadTranslations()
         if let saved = UserDefaults.standard.string(forKey: Constants.languageStorageKey),
            let language = SupportedLanguage(rawValue: saved) {
             currentLanguage = language
@@ -67,21 +68,26 @@ final class LocalizationManager {
             currentLanguage = .english
         }
         UserDefaults.standard.set([currentLanguage.rawValue], forKey: "AppleLanguages")
-        loadTranslations()
     }
 
     /// Loads the compiled `Localizable.strings` table for every supported
-    /// language into the in-memory translation table.
-    private func loadTranslations() {
+    /// language. Tables that cannot be found or read are skipped — lookups
+    /// then fall back to the English table.
+    private static func loadTranslations() -> [SupportedLanguage: [String: String]] {
+        var result: [SupportedLanguage: [String: String]] = [:]
         for language in SupportedLanguage.allCases {
             guard let url = Bundle.main.url(forResource: "Localizable",
                                             withExtension: "strings",
                                             subdirectory: nil,
                                             localization: language.rawValue),
                   let table = NSDictionary(contentsOf: url) as? [String: String]
-            else { continue }
-            translations[language] = table
+            else {
+                Logger.loc.warning("Failed to load Localizable.strings for \(language.rawValue, privacy: .public)")
+                continue
+            }
+            result[language] = table
         }
+        return result
     }
 
     // MARK: - String Lookup
@@ -90,11 +96,12 @@ final class LocalizationManager {
     ///
     /// The `_ = currentLanguage` line establishes an `@Observable` dependency
     /// so that SwiftUI views calling this method are re-evaluated when the
-    /// language changes.
+    /// language changes. Unresolved keys fall back to the English table and
+    /// finally to the key itself.
     func localizedString(forKey key: String) -> String {
         _ = currentLanguage
-        return translations[currentLanguage]?[key]
-            ?? translations[.english]?[key]
-            ?? key
+        if let value = translations[currentLanguage]?[key] { return value }
+        if let value = translations[.english]?[key] { return value }
+        return key
     }
 }

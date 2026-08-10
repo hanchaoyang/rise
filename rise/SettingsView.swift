@@ -63,12 +63,16 @@ struct SettingsView: View {
 
             HStack(spacing: 10) {
                 // Save button — persists key and language, triggers immediate fetch
-                Button(loc.localizedString(forKey: "Save")) {
+                Button {
                     PriceService.shared.updateAPIKey(apiKey)
                     isSaved = true
-                    loc.currentLanguage = selectedLanguage
+                    if selectedLanguage != loc.currentLanguage {
+                        loc.currentLanguage = selectedLanguage
+                    }
                     updateSettingsWindowTitle()
                     Logger.price.info("API key saved — triggering fetch")
+                } label: {
+                    Text(verbatim: loc.localizedString(forKey: "Save"))
                 }
                 .buttonStyle(.borderedProminent)
 
@@ -88,9 +92,8 @@ struct SettingsView: View {
         .padding(24)
         .onAppear {
             DispatchQueue.main.async {
-                settingsWindow = NSApp.windows.first {
-                    $0.title.contains("Settings")
-                }
+                settingsWindow = NSApp.keyWindow
+                    ?? NSApp.windows.first { $0.title.contains("Settings") }
                 updateSettingsWindowTitle()
             }
         }

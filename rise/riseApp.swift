@@ -16,7 +16,7 @@ struct RiseApp: App {
         MenuBarExtra {
             MenuContentView()
         } label: {
-            Text(priceLabel)
+            Text(verbatim: priceLabel)
         }
 
         // MARK: - Settings
