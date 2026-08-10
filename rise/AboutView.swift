@@ -11,6 +11,11 @@ struct AboutView: View {
     private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Rise"
     private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1"
     private let repoURL = URL(string: "https://github.com/hanchaoyang/rise")!
+    private let loc = LocalizationManager.shared
+
+    /// Cached reference to the About window for title updates after language
+    /// changes.
+    @State private var aboutWindow: NSWindow?
 
     // MARK: - Body
 
@@ -27,7 +32,7 @@ struct AboutView: View {
                 .font(.title.weight(.semibold))
 
             // Version
-            Text("Version \(version)")
+            Text(String(format: loc.localizedString(forKey: "Version %@"), version))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
@@ -37,7 +42,7 @@ struct AboutView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "link")
-                    Text("GitHub Repository")
+                    Text(verbatim: loc.localizedString(forKey: "GitHub Repository"))
                 }
             }
             .buttonStyle(.plain)
@@ -52,5 +57,23 @@ struct AboutView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            DispatchQueue.main.async {
+                aboutWindow = NSApp.windows.first {
+                    $0.identifier?.rawValue == "about"
+                }
+                updateAboutWindowTitle()
+            }
+        }
+        .onChange(of: loc.currentLanguage) { _, _ in
+            updateAboutWindowTitle()
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Updates the About window title to match the currently active language.
+    private func updateAboutWindowTitle() {
+        aboutWindow?.title = loc.localizedString(forKey: "About")
     }
 }

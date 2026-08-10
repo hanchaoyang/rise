@@ -8,6 +8,7 @@ import SwiftUI
 @main
 struct RiseApp: App {
     private let priceService = PriceService.shared
+    private let loc = LocalizationManager.shared
 
     var body: some Scene {
         // MARK: - Menu Bar
@@ -38,16 +39,22 @@ struct RiseApp: App {
     /// Human-readable menu bar label derived from the current price status.
     private var priceLabel: String {
         switch priceService.status {
-        case .initial:     return "Gold  ---"
-        case .noKey:       return "Gold  No API Key"
-        case .unauthorized:return "Gold  Invalid Key"
-        case .rateLimited: return "Gold  Rate Limited"
+        case .initial:
+            return loc.localizedString(forKey: "Gold  ---")
+        case .noKey:
+            return loc.localizedString(forKey: "Gold  No API Key")
+        case .unauthorized:
+            return loc.localizedString(forKey: "Gold  Invalid Key")
+        case .rateLimited:
+            return loc.localizedString(forKey: "Gold  Rate Limited")
         case .value(let v):
             let formatted = v.formatted(
                 .number.precision(.fractionLength(2)).grouping(.never)
             )
-            return "Gold  $\(formatted)"
-        case .error:       return "Gold  Fetch Failed"
+            let template = loc.localizedString(forKey: "Gold  $%@")
+            return String(format: template, formatted)
+        case .error:
+            return loc.localizedString(forKey: "Gold  Fetch Failed")
         }
     }
 }

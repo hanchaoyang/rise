@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		B81D424B302758940029DEC7 /* rise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = rise.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B81D424B302758940029DEC7 /* rise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = rise.app; path = Rise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -90,6 +90,8 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"zh-Hans",
+				"zh-Hant",
 				Base,
 			);
 			mainGroup = B81D4242302758940029DEC7;
